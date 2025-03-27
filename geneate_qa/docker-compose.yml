@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  pdfprocess:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    container_name: pdfprocess

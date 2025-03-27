@@ -1,0 +1,14 @@
+fastapi
+asyncio
+uvicorn
+pydantic
+langchain
+langchain_ollama
+gradio
+aiokafka
+kafka-python
+agno
+elasticsearch
+markdown
+openai
+# sentence_transformers

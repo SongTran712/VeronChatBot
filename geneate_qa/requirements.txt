@@ -1,0 +1,5 @@
+unstructured[pdf]
+lxml 
+pillow
+pdf2image
+markdownify
