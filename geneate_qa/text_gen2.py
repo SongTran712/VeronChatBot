@@ -1,84 +1,33 @@
-import asyncio
-from typing import List
-import json
 from agno.agent import Agent
 from agno.models.ollama import Ollama
 from pydantic import BaseModel, Field
 from textwrap import dedent
-from agno.tools import Toolkit
-from elasticsearch import Elasticsearch
-from typing import Optional
-from sentence_transformers import SentenceTransformer
-embed_model = SentenceTransformer('all-mpnet-base-v2')
-
+content = "abcdefgh"   #Ví dụ nội dung input là "abcdefgh"
 class AnswerQuestion(BaseModel):
-    session_id: str = Field(..., description="A concise yet meaningful identifier for the session related to the provided 'Knowledge_Base'. Ensure it remains general and descriptive.")
+    # session_id: str = Field(..., description="A concise yet meaningful identifier for the session related to the provided 'Knowledge_Base'. Ensure it remains general and descriptive.")
 
-    question: str = Field(..., description="Generate three well-formed questions that directly relate to the concepts, rules, or explanations provided in the 'Knowledge_Base'. The questions should encourage in-depth understanding. ")
+    question: str = Field(...)
 
-    answer: str = Field(..., description="Provide three accurate and contextually relevant answers based on the 'Knowledge_Base', ensuring they directly correspond to the generated questions.")
-class RetrieveTools(Toolkit):
-    def __init__(
-        self,
-    ):
-        super().__init__(name = "retrieve_tools")
-        self.es = Elasticsearch(
-    "http://localhost:9200",
-)
-        self.register(self.retrieve_tool)
-    def retrieve_tool(self, prompt:str) -> Optional[str]:
-        if self.es.ping():
-            print('Connected to ES!')
-        else:
-            print('Could not connect to ES!')
-            exit(1)
-        max_candi = self.es.count(index="rag")["count"]
-        if max_candi > 0:
-            query = {
-            "field" : "SummaryVector",
-            "query_vector" : embed_model.encode(prompt),
-            "k" : 5,
-            "num_candidates" : max_candi , 
-        }
-        res = self.es.knn_search(index="rag", knn=query , source=["Type","Session","Content","Summary"])
-        results = []
+    answer: str = Field(...)
 
-        for hit in res['hits']['hits']:
-            if hit['_score'] < 0.5:
-                continue
-            source_data = hit['_source']
-            # print(source_data.get("Content"))
-            results.append({
-                "Content":  """Gaeng Som Phak Ruam
-                        Sour Curry with Mixed Vegetables
-                1. Clean the shrimps thoroughly and devein
-                them. Bring the vegetable stock (or water) to a boil and
-                add Gaeng Som paste. 2. When the soup returns to a full
-                boil, add vegetables in this order: cauliflower, long beans
-                and cabbage. 3. Season with palm sugar, tamarind juice
-                and fish sauce, making sure everything is well dissolved.
-                4. Add shrimps and cook briefly.
-                Tips: • As an alternative, shrimp can be replaced with fish.
-                • Seafood cooks quite quickly thus shrimp and fish
-                should be in the boiling soup only briefly, and
-                then whisked out and served to keep it fresh
-                and juicy.
-                • Prepare the drier, tougher ingredients first, like
-                cauliflower and long beans, followed by leafy
-                vegetables like cabbage.
-""",       
-            })
-        return json.dumps(results, indent=2)   
+class ThreeAQ(BaseModel):
+    aqlist: list[AnswerQuestion]
       
-structured_output_agent = Agent(
+from agno.run.response import RunResponse
+from rich.pretty import pprint
+# Run the agent synchronously
+import pandas as pd
+def generate_dataset(data, content):
+    structured_output_agent = Agent(
     model=Ollama(id="llama3.2:1b"),
     description= dedent("""\
-        You are an expert in generating high-quality question-answer (QA) pairs, designed to enhance comprehension and knowledge retention.  
-        Your strength lies in crafting precise, contextually relevant questions and well-structured answers that cater to various difficulty levels.  You use 'Tools' to get the Knowledge_base
-        You ensure that each QA pair is clear, informative, and aligned with the given content.\
+        You are an expert in generating high-quality question-answer (QA) pairs to build dataset, designed to enhance comprehension for major study and research topic.  
+        Your strength lies in crafting precise, contextually relevant questions and well-structured answers that cater to various difficulty levels. 
+        You ensure that each QA pair is clear, informative, and aligned with the given content.
+        MAKE SURE YOU GENERATE AT LEAST THREE PAIR QA-PAIRS !!!\
     """),
     instructions=dedent("""\
-        When generating QA pairs, follow these principles:  
+        When generating THREE QA pairs, follow these principles:  
 
         1. Ensure clarity and relevance:  
            - Questions should be direct, unambiguous, and closely related to the provided content.  
@@ -92,15 +41,20 @@ structured_output_agent = Agent(
 
         4. Adapt to the content type:  
            - For factual topics, focus on objective and knowledge-based questions.  
-           - For conceptual topics, include thought-provoking or explanatory questions.\
+           - For conceptual topics, include thought-provoking or explanatory questions.
+           - For the research topics or major, try to think and answer more depth and give the detail answer.\
     """),
-    response_model= AnswerQuestion,
-    tools = [RetrieveTools()]
-)
-from agno.run.response import RunResponse
-from rich.pretty import pprint
-# Run the agent synchronously
-structured_output_response: RunResponse = structured_output_agent.run("a Thai dish")
-pprint(structured_output_response.content)
-
-    
+    response_model= ThreeAQ,
+    structured_outputs= True,
+    )
+    structured_output_response: RunResponse = structured_output_agent.run(content)
+    QAstack = structured_output_response.content
+    for i in range(len(QAstack.aqlist)):
+        ques = QAstack.aqlist[i].question
+        ans = QAstack.aqlist[i].answer
+        data.append({"question": ques, "answer": ans})
+    return data
+data = []
+# Create a DataFrame from the list
+df = pd.DataFrame(generate_dataset(data, content))
+''' NOTE: content được lấy từ Retrieve nội dung !!!'''
