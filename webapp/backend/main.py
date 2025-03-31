@@ -22,7 +22,7 @@ from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 import asyncio
 from agno.tools import Toolkit
-# from agno.tools.duckduckgo import DuckDuckGoTools
+from agno.tools.duckduckgo import DuckDuckGoTools
 # from agno.knowledge.pdf import PDFKnowledgeBase
 # from agno.vectordb.pgvector import PgVector
 # from agno.embedder.ollama import OllamaEmbedder
@@ -36,12 +36,11 @@ from sqlalchemy import Column, Integer, String
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import select
 from typing import Optional
-from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.workflow import RunEvent, RunResponse, Workflow
 
-from typing import Union, Literal, Dict
-
-model = Ollama(id="llama3.2:1b", host="http://localhost:11434")
+from typing import Union, Literal
+    
+model = Ollama(id="llama3.2:1b", host="http://192.168.1.20:11434")
 engine = create_engine("postgresql+psycopg2://ai:ai@localhost:5555/ai")
 embed_model = SentenceTransformer('all-mpnet-base-v2')
 
@@ -52,7 +51,7 @@ class History(Base):
     __tablename__ = "history1234"
     id = Column(Integer, primary_key=True, autoincrement= True)
     user = Column(String, index = True)
-    session = Column(String, index = True)
+    sessionID = Column(String, index = True)
     input = Column(String)
     response = Column(String)
     # summarize = Column(String)
@@ -64,7 +63,7 @@ def get_summarize_agent(
 ) -> Agent:
     """Get an Agentic RAG Agent with Memory."""
     agentic_rag_agent: Agent = Agent(
-        model = model,
+        model = Ollama(id="llama3.2:1b", host="http://192.168.1.20:11434"),
         # name="agentic_rag_agent",
         description = [
     "This task involves creating a clear and concise summary of the conversation. Capture the key points, main takeaways, and any user requests or assistant responses, ensuring the summary is under 100 words."
@@ -77,11 +76,11 @@ def get_summarize_agent(
     )
     return agentic_rag_agent
 
-def retrieve_history():
+def retrieve_history(user, sessionID):
     # query_vector = embed_model.encode(prompt)
     try:
         with Session(engine) as session:
-            outs = session.query(History).limit(3).all()
+            outs = session.query(History).filter(History.user == user, History.sessionID == sessionID).limit(3).all()
             results = ""
             if outs:
                 for out in outs:
@@ -89,9 +88,9 @@ def retrieve_history():
                     
                     results += f"user : {out.input}\nassistant : {out.response}\n"
                 
-                summarize = summarize_agent.run(results).content
-                print(summarize)
-                return json.dumps({"Summarize":summarize}, indent= 2)
+                # summarize = summarize_agent.run(results).content
+                sum = asyncio.to_thread(summarize_agent.run, results) 
+                return json.dumps({"Summarize":sum.content}, indent= 2)
             return  None
 
     except Exception as e:
@@ -143,7 +142,7 @@ class SearchResults(BaseModel):
     
 def get_route_agent():
     agentic_rag_agent = Agent(
-        model = model,
+        model = Ollama(id="llama3.2:1b", host="http://192.168.1.20:11434"),
         description=["You are a helpful assistant, an expert at classifying whether the input is 'Greeting' or 'Question'."],
         instructions=dedent("""\
             Classify the input based on the following criteria:
@@ -185,6 +184,7 @@ def get_core_agent(
     return agentic_rag_agent
 
 def get_greet_agent(
+    user, session
 ) -> Agent:
     agentic_rag_agent: Agent = Agent(
         # name="agentic_rag_agent",
@@ -193,7 +193,7 @@ def get_greet_agent(
     "You are VERON, a helpful IC assistant. Your goal is to provide a formal, yet basic greeting response."
 ],
 
-    context = {"history": retrieve_history()},
+    context = {"history": retrieve_history(user, session)},
 
     instructions = dedent("""\
         - Maintain a formal but friendly tone for greetings.
@@ -210,34 +210,37 @@ def get_greet_agent(
 
 
 def get_research_agent(
+    user, session
 ) -> Agent:
     """Get an Agentic RAG Agent with Memory."""
     agentic_rag_agent: Agent = Agent(
         # name="agentic_rag_agent",
-        model=model,
+        model = Ollama(id="llama3.2:1b", host="http://192.168.1.20:11434"),
         description = [
     "You are VERON, a helpful assistant. Your goal is to research and provide answers based on the available tools and information."
 ],
-
+        # - Initiate the 'retrieve_tool' to gather relevant information.
+        # - If the 'retrieve_tool' provides useful information, base your answer on that.
+        # - If no useful information is retrieved, 
     instructions = dedent("""\
-        - Initiate the 'retrieve_tool' to gather relevant information.
-        - If the 'retrieve_tool' provides useful information, base your answer on that.
-        - If no useful information is retrieved, use the 'duckduckgo_search' tool with the input query to find relevant details.
+        
+        - Use the 'duckduckgo' tool to find relevant details.
         - If appropriate, incorporate historical context from the conversation: {history}.
         - Focus on providing a direct answer, without mentioning the tools used or the process behind your decision.
     """),
         # "If the input is a standard formal Greeting, such as 'Hello' or 'How are you' or something like that just return None",
-        tools=[RetrieveTools(), DuckDuckGoTools()],
+        # tools=[RetrieveTools(), DuckDuckGoTools()],
+        tools = [DuckDuckGoTools(search = True, news = False)],
         # markdown= True,
         # structured_outputs = True,
         add_context = True,
-        context = {"history": retrieve_history()},
+        context = {"history": retrieve_history(user, session)},
+        markdown = True,
         
     )
-
     return agentic_rag_agent
 
-async def data_stream(llm, content):
+async def data_stream(llm, content, user, sessionID):
     run_response = await llm.arun(content, stream = True)
     try:
         store_data = ""
@@ -251,7 +254,7 @@ async def data_stream(llm, content):
                 yield response_content
         try:
             with Session(engine) as session:
-                ins = History(user = "id123", session = "id1", input = content
+                ins = History(user = user, sessionID = sessionID, input = content
                         , response = store_data
                         # , embedding = embed_model.encode(f"input:{content} - response:{store_data}")
                         )
@@ -281,20 +284,25 @@ app.add_middleware(
 )
 class Item(BaseModel):
     content: str = Field(...)
-
+    user: str = Field(...)
+    sessionID: str = Field(...)
+    
+    
 @app.post("/api/chat")
 async def ask(req: Item):
     route_out = await asyncio.to_thread(route_llm.run, req.content) 
+    print(req.user, req.sessionID)
     # route_out = route_llm.run(req.content).content.output
     if route_out.content.output == 'Greeting':
-        llm_final = get_greet_agent()
+        llm_final = get_greet_agent(req.user, req.sessionID)
         know_base = req.content
     else:
         llm_final = get_core_agent()
-        know = route_out = await asyncio.to_thread(route_llm.run, req.content) 
+        res_llm = get_research_agent(req.user, req.sessionID)
+        know = await asyncio.to_thread(res_llm.run, req.content) 
         know_base = know.content
-        
-    generator = data_stream(llm_final, know_base)
+    
+    generator = data_stream(llm_final, know_base, req.user, req.sessionID)
     return StreamingResponse(generator, media_type="text/event-stream"
                         , headers={"cache-Control": "no-cache", "cf-cache-status": "DYNAMIC",
                                    "x-content-type-options": "nosniff", "content-type":"text/event-stream"}
@@ -302,7 +310,5 @@ async def ask(req: Item):
 
 if __name__ == "__main__":
     route_llm = get_route_agent()
-    res_llm = get_research_agent()
-    llm_final = get_core_agent()
     summarize_agent = get_summarize_agent()
     uvicorn.run(app, host="0.0.0.0", port=8000)

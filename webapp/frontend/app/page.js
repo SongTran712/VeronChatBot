@@ -1,17 +1,27 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // import Markdown from "marked-react";
 // import Markdown from 'markdown-to-jsx'
 // import { render } from 'react-dom'
 import ReactMarkdown from 'react-markdown'
 import { marked } from 'marked';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function Home() {
 
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [sessionID, setSessionID] = useState(null);
+
+  useEffect(() => {
+    // If the messages array is empty, create a sessionID
+    if (messages.length === 0 && !sessionID) {
+      const generatedSessionID = uuidv4(); // Generate a random UUID
+      setSessionID(generatedSessionID);
+    }
+  }, [messages, sessionID]);
 
   const sendMessage = async () => {
     if (!input.trim()) return; // If input is empty, do nothing.
@@ -19,12 +29,14 @@ export default function Home() {
     setMessages((prev) => [...prev, userMessage]); // Add user message to chat
     setInput(""); // Clear the input
     setLoading(true); // Start loading indicator
+
+
   
     try {
       const response = await fetch("http://localhost:8000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: input }),
+        body: JSON.stringify({ content: input, user:"testuser", sessionID: sessionID }),
       });
   
       if (!response.ok) {
