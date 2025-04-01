@@ -153,7 +153,7 @@ The final output should have two sections: one labeled "Code Verilog" and the ot
         Text = '''The name in the title must be the same as the declared name.  Description One or more paragraph(s) describing in detail the functionality implemented by the function.  Immediately following the function heading should be the function declaration.  The format of these blocks is shown in the following example: '''
         Code = '''////////////////////////////////////////////////////////////////////////////////<-80 chars // Comments for the following logic wire   signal1; assign signal1 = ^signal2; reg [12:0] signal3; always @( posedge clk19 or negedge rst_ ) begin if (!rst_) begin signal3 <= 13'b0; end else begin if (|signal3) begin signal3[2] <= signal4; end : : end end '''
                        """)
-agent_define = Agent(model=Ollama(id="gemma3:12b", host="http://192.168.1.20:11434", ),
+agent_define = Agent(model=Ollama(id="gemma3:27b", host="http://192.168.1.20:11434", ),
               description = "You are an AI agent that processes mixed Verilog code and explanatory text. Your task is to separate them into two distinct categories",
               instructions = instruction_define,
               response_model= TextVerilog,
