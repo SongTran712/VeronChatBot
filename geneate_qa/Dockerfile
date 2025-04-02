@@ -25,5 +25,5 @@ COPY . .
 # Expose the port (optional, only needed if you're running a web app)
 EXPOSE 8000
 
-# Command to run the application
-CMD ["python", "app.py"]
+# # Command to run the application
+# CMD ["python", "app.py"]

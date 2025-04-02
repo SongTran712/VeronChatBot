@@ -85,10 +85,5 @@ def check_session(elements):
     return sessions, contents, contents_image, types
 
 while True:
-    elements = partition_pdf(filename=filename,
-                         strategy = "hi_res",
-                         infer_table_structure=True,
-                         model_name = 'yolox')
-    session, text, image, types = check_session(elements)
     
     time.sleep(5)
