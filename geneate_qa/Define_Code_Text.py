@@ -1,5 +1,5 @@
 from textwrap import dedent
-
+from agno.models.ollama import Ollama
 instruction_rewrite = dedent("""\
    You are a specialized LLM for processing and formatting content that includes both text and code. Your responsibilities include:
 
@@ -161,7 +161,7 @@ agent_define = Agent(model=Ollama(id="gemma3:27b", host="http://192.168.1.20:114
               markdown=True)
 # input = str(df['text'][7])
 # # Print the response on the terminal
-# run: RunResponse = agent.run(input)
+# run: RunResponse = agent_define.run(input)
 # print(run.content)
 agent_rewrite = Agent(model=Ollama(id="gemma3:27b", host="http://192.168.1.20:11434"),
               description = "You are an LLM specializing in Verilog code processing and formatting. Your job is to properly divide and format signal declarations (wires, regs, etc.) so that each signal appears on a separate line while preserving comments (// ...) and ensuring correct Verilog syntax. At the same time, you can distinguish between normal text and code. For normal text, you keep it the same and only format the code",
@@ -170,5 +170,5 @@ agent_rewrite = Agent(model=Ollama(id="gemma3:27b", host="http://192.168.1.20:11
 
 # input = str(df['text'][14])
 # # Print the response
-# run: RunResponse = agent.run(input)
-# print(run.content)
+run: RunResponse = agent_rewrite.run(input)
+defineInfor = run.content
