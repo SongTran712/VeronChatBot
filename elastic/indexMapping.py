@@ -1,12 +1,5 @@
 indexMapping = {
     "properties":{
-        
-        "Type":{
-            "type":"text"
-        },
-        "Session":{
-            "type":"text"
-        },
         "Content":{
             "type":"text"
         },
