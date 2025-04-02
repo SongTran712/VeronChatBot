@@ -9,15 +9,14 @@ class SummarizeText:
         
         self.agent = Agent(
             model=Ollama(id=self.model_id, host=self.host),
-            description_Sum = """ You are an excellent assistant. Your mission is summarazing the input into shorter paragraph""",
-            instruction_Sum = """  """
+            description= """ You are an excellent assistant. Your mission is summarazing the input into shorter paragraph""",
+            instructions= """ Provide a wise and insightful summary of the following input, preserving its core message while naturally integrating key keywords. 
+            The summary should be thought-provoking and reflective, offering deeper understanding or perspective."""
         )
     def generate_dataset(self, content: str) -> pd.DataFrame:
         Sum_run: RunResponse = self.agent.run(content)
         Sum_text = Sum_run.content
-        data_sum = []
-        data_sum.append({"summarization":Sum_text})
-        return data_sum
+        return Sum_text
 # Example usage:
 # generator = SummarizeText(model_id="gemma3:27b", host="http://192.168.1.19:11434")
 # data_sum = generator.generate_dataset(content)
