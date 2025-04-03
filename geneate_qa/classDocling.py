@@ -53,6 +53,8 @@ class DoclingProcessor:
                 # Nếu không phải là tiêu đề, nội dung được cộng dồn
                 if line.startswith("<otsl>"):
                     current_content += "\n" + line.strip()
+                elif line.startswith("<page_footer>") or line.startswith("<page_header>"):
+                    continue
                 else:
                     current_content += "\n" + re.sub(r"</?[^<>]+>", "", line).strip()
         
