@@ -17,102 +17,77 @@ class QADatasetGenerator:
         self.host = host
         
         self.agent = Agent(
-            model=Ollama(id=self.model_id, host=self.host),
-            description=dedent("""
-                You are an expert in generating high-quality question-answer (QA) pairs to build datasets that enhance comprehension for major study and research topics.
-                Your strength lies in crafting precise, contextually relevant questions and well-structured answers that cater to various difficulty levels.
-                You ensure that each QA pair is clear, informative, and aligned with the provided content.
+            model=Ollama(id=self.model_id, host=self.host, temperature = 1.25, top_p = 0.7 ),
+            description = dedent("""
+                You are an expert in generating high-quality, technically detailed question-answer (QA) pairs for building datasets aimed at deepening understanding in major study and research topics, especially those involving hardware design and Verilog/SystemVerilog programming.
+            
+                Your strength lies in crafting multi-layered questions that test factual recall, conceptual understanding, syntax logic, debugging, best practices, and real-world application.
+            
+                You generate not just surface-level answers, but detailed, informative, and contextually enriched responses that synthesize input content with your domain expertise. 
                 
-                MAKE SURE YOU GENERATE AT LEAST THREE QA-PAIRS, AND IF THE CONTENT CONTAINS CODE, INCLUDE QUESTIONS SPECIFICALLY RELATED TO THE CODE.
-            """),
-            instructions=dedent("""\
-                    When generating THREE QA pairs, follow these principles:
-
-                    1. Ensure clarity and relevance:
-                    - Questions should be direct, unambiguous, and closely related to the provided content.
-                    - Answers should be concise, accurate, and provide meaningful insights.
-                    - If the content includes descriptive code snippets, ask questions about the code’s structure, syntax, functionality, and best practices.
-
-                    ***Example 1:***  
-                    **Input:**  
-                    ```  
-                    The format for module instantiation is:  
-                        - Comments must have the same indentation level as the section of code they refer to.  
-                        - Begin and End have the same indentation as the code they enclose.  
-
-                        ## Case Statement Format  
-                        case (signal3)  
-                            pvalue1:  
-                                begin  
-                                end  
-                            pvalue2, pvalue3, pvalue4:  
-                                begin  
-                                end  
-                            default:  
-                                begin  
-                                end  
-                        endcase  
-
-                        ## The format for the `always` and `initial` statements is:  
-                        always @(posedge clk19 or negedge rst_)  
-                            begin  
-                            if (!rst_)  
-                                begin  
-                                end  
-                            else  
-                                begin  
-                                if ()  
-                                    begin  
-                                    end  
-                                end  
-                        initial  
-                            begin  
-                            ...  
-                            end  
-
-                        ## The format for module instantiation is:  
-                        core icore // in case of instantiating a user-defined module  
-                            (  
-                            .signal1(signal1),  
-                            .signal2(signal2),  
-                            .signal3(signal3)  
-                            );  
-                        -or-  
-                        macro imacro (signal1, signal2, signal3);  // Acceptable for a short-list macro  
-                    ```  
+                Important: Do not use vague or indirect references like “this code”, “that document”, “the snippet above”, etc in the 'Question'.
+                
+                You MUST generate at least 40 QA pairs.
+            """)
+            ,
+            instructions = dedent("""
+                When generating the 40 QA pairs, follow these principles:
+            
+                1. ✅ Clarity + Relevance + Depth  
+                    - Questions must be precise, relevant, and vary in difficulty (basic to advanced). 
+                    - You must not use word like "this, that, those .... document, code" make sure use clear thing that you want to ask, fill it in <...>
+                    - For code-heavy content (e.g. Verilog), include:
+                        - Syntax-based questions (e.g., "What does this code <....> do?")
+                        - Functional logic questions (e.g., "What is the purpose of this block of code <...> ?")
+                        - Debugging/anti-pattern questions (e.g., "What is wrong with this code <...> ?")
+                        - Optimization/best-practice questions (e.g., "How can this <...> be improved?")
+                
+                2. ✅ Content-based, but Knowledge-Enhanced Answers  
+                    - Use the input content as the **primary** source of information.  
+                    - However, expand and enrich the answers by using your own knowledge when appropriate.  
+                    - Add relevant examples, explanations, or clarifications to improve understanding.  
+                    - Avoid repeating the input verbatim. Instead, explain, synthesize, and enhance.
+            
+                    ***Example 1:***
+                    Input:
+                    ```verilog
+                    assign cond_true = request1 | request2 | request3;
+                    always @(posedge clk or negedge rst_) begin
+                        if (!rst_) begin end
+                        else begin
+                            if (cond_true)
+                                reg1 <= 2'b10;
+                        end
+                    end
+                    assign wire3 = cond_true ? regtrue : regfalse;
+                    ```
                     
-                    **Output:**  
-                    **Question 1:** What is the format for module instantiation?  
-                    **Answer:**  
-                    ```
-                    The format for module instantiation is:  
-                        core icore // in case of instantiating a user-defined module  
-                            (  
-                            .signal1(signal1),  
-                            .signal2(signal2),  
-                            .signal3(signal3)  
-                            );  
-                        -or-  
-                        macro imacro (signal1, signal2, signal3);  // Acceptable for a short-list macro  
-                    ```
-
-                    **Question 2:** What is the role of the `always` block in Verilog?  
-                    **Answer:** The `always` block in Verilog is used to define sequential logic and execute its contents repeatedly whenever the specified event occurs (e.g., `posedge clk` or `negedge rst_`). It is commonly used for implementing registers, state machines, and other sequential elements.
-
-                    **Question 3:** How does the `case` statement function in Verilog?  
-                    **Answer:** The `case` statement in Verilog is used to implement multi-way branching. It evaluates the given expression and executes the matching case branch. If no match is found, the `default` case executes. This is similar to switch-case structures in other programming languages.
-
-                    2. Vary difficulty levels:  
-                    - Create a mix of basic, intermediate, and advanced questions to suit different audiences.  
-
-                    3. Maintain structure and coherence:  
-                    - Each QA pair should be well-formed, avoiding redundancy or unnecessary complexity.  
-
-                    4. Adapt to the content type:  
-                    - For factual topics, focus on objective and knowledge-based questions.  
-                    - For conceptual topics, include thought-provoking or explanatory questions.  
-                    - If the content is research-oriented, provide detailed and in-depth answers.  
-                """),
+                    Output:
+                    Question: Why should conditional expressions like `request1 | request2 | request3` be assigned once and reused as a named wire?
+                    
+                    Answer:
+                    Defining `cond_true` as a single wire avoids duplicating the same logic multiple times. This improves **readability**, reduces the risk of **inconsistent edits**, and simplifies **debugging**. In synthesis, having one named signal ensures consistent hardware generation. Reusing named conditions is also a best practice in RTL coding, especially in complex designs where expressions are reused across modules or time domains.
+            
+                3. ✅ Mixed Question Types  
+                    - Combine factual, functional, conceptual, and critical-thinking questions.  
+                    - If theory and code are mixed, ask questions that span both theory and practical implementation.
+            
+                    ***Example 2 (mixed type):***
+                    Input: "Do not use `display` in RTL source code."
+                    Question: Why is `$display` discouraged in RTL coding and what alternatives should be used in testbenches?
+            
+                    Answer:
+                    `$display` is a simulation-only construct, meaning it doesn't synthesize into hardware and can cause confusion in RTL. Including it violates the clean separation between testbench (non-synthesizable) and RTL (synthesizable) logic. For observability during simulation, `$display` should be used only in testbenches. For debugging RTL, waveform inspection via signal monitoring tools (e.g., VCD files, signal viewers) is the preferred method.
+            
+                4. ✅ Keep Coherence + Structure
+                    - Each QA pair should be self-contained.
+                    - Avoid redundancy across questions.
+                    - Structure answers in paragraphs or bullet points if helpful.
+                
+                5. ✅ If input is mixed (theory + code), ask across both:
+                    - Don't just ask about the code syntax.
+                    - Include questions about the reasoning behind rules, design methodology, and practical consequences.
+            """),
             response_model=ThreeAQ,
             structured_outputs=True,
         )
