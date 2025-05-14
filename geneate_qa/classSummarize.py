@@ -17,6 +17,4 @@ class SummarizeText:
         Sum_run: RunResponse = self.agent.run(content)
         Sum_text = Sum_run.content
         return Sum_text
-# Example usage:
-# generator = SummarizeText(model_id="gemma3:27b", host="http://192.168.1.19:11434")
-# data_sum = generator.generate_dataset(content)
+    

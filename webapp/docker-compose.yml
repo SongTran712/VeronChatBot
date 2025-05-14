@@ -126,19 +126,19 @@ services:
       - 5601:5601
     depends_on:
       - elasticsearch   
-  # db:
-  #   hostname: db
-  #   image: ankane/pgvector
-  #   ports:
-  #    - 5555:5432
-  #   restart: always
-  #   environment:
-  #     - POSTGRES_DB=ai
-  #     - POSTGRES_USER=ai
-  #     - POSTGRES_PASSWORD=ai
-  #     - POSTGRES_HOST_AUTH_METHOD=trust
-  #   volumes:
-  #    - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+  db:
+    hostname: db
+    image: ankane/pgvector
+    ports:
+     - 5555:5432
+    restart: always
+    environment:
+      - POSTGRES_DB=ai
+      - POSTGRES_USER=ai
+      - POSTGRES_PASSWORD=ai
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+     - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   ollama_data:  # Ensure this volume is declared properly
