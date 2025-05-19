@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { FaSearch } from 'react-icons/fa';
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useRouter } from 'next/navigation'
+import { Upload, User } from 'lucide-react';
 
 export default function Home() {
   const router = useRouter()
@@ -21,6 +22,9 @@ export default function Home() {
   const [sessionID, setSessionID] = useState(null);
   const [showSidebar, setShowSidebar] = useState(true)
   const [collapsed, setCollapsed] = useState(false);
+  const [selectedField, setSelectedField] = useState('');
+  const [textValue, setTextValue] = useState('');
+  const [file, setFile] = useState(null);
 
 const ChatItem = ({ imgSrc, name, lastMsg, route }) => (
   <div
@@ -37,7 +41,12 @@ const ChatItem = ({ imgSrc, name, lastMsg, route }) => (
   </div>
 );
 
-
+ const handleDrop = (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files.length) {
+      setFile(e.dataTransfer.files[0]);
+    }
+  };
   const chatList = [
     { imgSrc: '/agent.avif', name: 'Agent', lastMsg: 'Last message preview', route: '/' },
     { imgSrc: '/vlm.jpg', name: 'VLMs', lastMsg: 'Last message preview', route:'/vlm' },
@@ -191,64 +200,67 @@ const ChatItem = ({ imgSrc, name, lastMsg, route }) => (
       
 
       
-      <div className="relative w-full px-5 flex flex-col justify-between bg-cover bg-center overflow-hidden"  style={{
-      backgroundImage: "url('/bg.jpg')"
-    }} >
+      <div className="relative w-full px-5 flex flex-col justify-between bg-cover bg-center overflow-hidden"  >
+
+          
 
 
         <div className="flex flex-col mt-5" >
         
 
+<div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-xl space-y-6">
+        
+        {/* Hello User */}
+        {/* <div className="flex items-center space-x-3"> */}
+          <User className="text-blue-500" />
+          <h1 className="text-xl font-semibold text-gray-800">Hello, User</h1>
+        {/* </div> */}
 
-        {/* <div className="border p-4 h-80 overflow-y-auto"> */}
-        {messages.map((msg, index) => (
-          <div key={index}> 
-            {msg.role == "user" ? <div className="flex justify-end mb-4">
-            <div
-              className="mr-2 py-3 px-4 bg-blue-400 rounded-bl-3xl rounded-tl-3xl rounded-tr-xl text-white"
-            >
-              {msg.content}
-            </div>
-            <img
-              src="/avt.jpg"
-              className="object-cover h-12 w-12 rounded-full"
-              alt=""
-            />
-          </div>:<div className="flex mb-4 w-full sm:w-2/3">
-            <img
-              src="/robo-avt.png"
-              className="object-cover h-12 w-12 rounded-full"
-              alt=""
-            />
-            <div
-              className="ml-2 py-3 px-4 bg-gray-200 rounded-br-3xl rounded-tr-3xl rounded-tl-xl text-black"
-              >
-              {/* {msg.content} */}
-              <div dangerouslySetInnerHTML={{ __html: marked(msg.content) }} />
-            </div>
-          </div>}
-          </div>
-        ))}
-          
+        {/* Select Field */}
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Please select a field:</label>
+          <select
+            value={selectedField}
+            onChange={(e) => setSelectedField(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">-- Select --</option>
+            <option value="text">Text</option>
+            <option value="file">File</option>
+          </select>
         </div>
-        <div className="py-5 flex items-center gap-3">
 
+        {/* Input Field */}
+        <div className="space-y-2">
+          <label className="block text-gray-700 font-medium">Enter text or drop a file below:</label>
 
-  <input
-    type="text"
-    value={input}
-    onChange={handleInputChange}
-    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-    className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    placeholder="Type your message..."
-    style={{ color: inputColor }}
-  />
-  <button
-    onClick={sendMessage}
-    className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full transition"
-  >
-    Send
-  </button>
+          {selectedField === 'text' && (
+            <input
+              type="text"
+              placeholder="Enter text..."
+              value={textValue}
+              onChange={(e) => setTextValue(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg"
+            />
+          )}
+
+          {selectedField === 'file' && (
+            <div
+              onDrop={handleDrop}
+              onDragOver={(e) => e.preventDefault()}
+              className="w-full p-4 text-center border-2 border-dashed border-gray-400 rounded-lg text-gray-500 cursor-pointer"
+            >
+              <Upload className="mx-auto mb-2" />
+              {file ? file.name : 'Drop file here or click to upload'}
+              <input
+                type="file"
+                onChange={(e) => e.target.files && setFile(e.target.files[0])}
+                className="hidden"
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
 
   
