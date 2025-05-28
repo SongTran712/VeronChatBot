@@ -39,8 +39,9 @@ from typing import Optional
 from agno.workflow import RunEvent, RunResponse, Workflow
 from agno.tools.email import EmailTools
 from typing import Union, Literal
-    
-model = Ollama(id="llama3.2:1b", host="http://localhost:11434")
+from duckduckgo_search import DDGS
+
+model = Ollama(id="llama3.2:1b", host="http://192.168.30.172:11434")
 engine = create_engine("postgresql+psycopg2://ai:ai@localhost:5555/ai")
 embed_model = SentenceTransformer('all-mpnet-base-v2')
 
@@ -63,7 +64,7 @@ def get_summarize_agent(
 ) -> Agent:
     """Get an Agentic RAG Agent with Memory."""
     agentic_rag_agent: Agent = Agent(
-        model = Ollama(id="llama3.2:1b", host="http://localhost:11434"),
+        model = Ollama(id="llama3.2:1b", host="http://192.168.30.172:11434"),
         # name="agentic_rag_agent",
         description = [
     "This task involves creating a clear and concise summary of the conversation. Capture the key points, main takeaways, and any user requests or assistant responses, ensuring the summary is under 100 words."
@@ -154,7 +155,7 @@ class SearchResults(BaseModel):
 
 def get_route_agent():
     agentic_rag_agent = Agent(
-        model=Ollama(id="llama3.2:1b", host="http://localhost:11434"),
+        model=Ollama(id="llama3.2:1b", host="http://192.168.30.172:11434"),
         description=["You are a helpful assistant, an expert at classifying whether the input is a 'Greeting', 'Question', or 'Mail' intent."],
         instructions=dedent("""\
             Classify the input based on the following criteria:
@@ -189,7 +190,7 @@ async def get_mail_agent():
     sender_passkey = "kqdifulobednqhym"
    
     mail_agent = Agent(
-    model=Ollama(id="llama3.2:1b", host="http://localhost:11434"),
+    model=Ollama(id="llama3.2:1b", host="http://192.168.30.172:11434"),
     tools=[
         EmailTools(
             receiver_email=receiver_email,
@@ -254,7 +255,7 @@ async def get_research_agent(user, session) -> Agent:
     """Get an Agentic RAG Agent with Memory."""
 
     agentic_rag_agent: Agent = Agent(
-        model=Ollama(id="llama3.2:1b", host="http://localhost:11434"),
+        model=Ollama(id="llama3.2:1b", host="http://192.168.30.172:11434"),
 
         description=[
             "You are VERON, a helpful assistant. Your goal is to research and provide answers based on the available tools and information."
