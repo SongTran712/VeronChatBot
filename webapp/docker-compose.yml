@@ -37,72 +37,72 @@ services:
   #     # KAFKA_LOG_SEGMENT_BYTES: "536870912"  # Limit segment size to 512MB
   #     # KAFKA_LOG_CLEANER_ENABLE: "true"
 
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: frontend
-  #   # ports:
-  #   #   - 3000:3000
-  #   # depends_on:
-  #   #   - backend
-  #   restart: always
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    # ports:
+    #   - 3000:3000
+    # depends_on:
+    #   - backend
+    restart: always
     
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   container_name: backend
-  #   restart: always
-  #   depends_on:
-  #     - ollama
-  #     - elasticsearch
-  #     # - kafka
-  #   volumes:
-  #     - ./backend:/app
-  #   command: uvicorn main:app --host 0.0.0.0 --port 8000  --workers 10
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    restart: always
+    depends_on:
+      - ollama
+      - elasticsearch
+      # - kafka
+    volumes:
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000  --workers 10
 
-  # consumer:
-  #   build:
-  #     context: ./consumer
-  #     dockerfile: Dockerfile
-  #   container_name: consumer
-  #   restart: always
-  #   depends_on:
-  #     - ollama
-  #     - backend
-  #     - kafka
-  #     - elasticsearch
-  #   volumes:
-  #     - ./consumer:/app
+  consumer:
+    build:
+      context: ./consumer
+      dockerfile: Dockerfile
+    container_name: consumer
+    restart: always
+    depends_on:
+      - ollama
+      - backend
+      - kafka
+      - elasticsearch
+    volumes:
+      - ./consumer:/app
 
-  # nginx:
-  #   image: nginx:alpine
-  #   container_name: nginx
-  #   ports: 
-  #     - "80:80"
-  #   volumes:
-  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-  #     - ./nginx/log:/var/log/nginx
-  #   depends_on:
-  #     - frontend
-  #     - backend
-  #   restart: always
-  # ollama:
-  #   build: 
-  #     context: ./ollama
-  #     dockerfile: Dockerfile
-  #   restart: always
-  #   volumes:
-  #     - ollama_data:/root/.ollama
-  #   ports:
-  #     - "11434:11434"
-  #   entrypoint: ["/bin/sh", "-c"]
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports: 
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/log:/var/log/nginx
+    depends_on:
+      - frontend
+      - backend
+    restart: always
+  ollama:
+    build: 
+      context: ./ollama
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    entrypoint: ["/bin/sh", "-c"]
     
-  #   command:
-  #     - |
-  #       ollama pull llama3.2:1b
-  #       ollama serve
+    command:
+      - |
+        ollama pull qwen3:4b
+        ollama serve
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
