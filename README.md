@@ -25,13 +25,13 @@ python main.py
 
 <b>Chatbot Function:</b>
 
-Normal Greeting:
+<i>Normal Greeting:</i>
 ![alt text](figure/image.png)
 
-Duckduckgo Search:
+<i>Duckduckgo Search:</i>
 ![alt text](figure/image-1.png)
 
-RAG with Elasticsearch:
+<i>RAG with Elasticsearch:</i>
 
 ![alt text](figure/image-2.png)
 
